@@ -15,7 +15,9 @@ DejaVu Sans Bold and wraps per-word.
 
 Tell your agent (Hermes, Claude Code, Codex, OpenCode, etc.):
 
-> Fetch and follow instructions from https://raw.githubusercontent.com/lunalunaa/tg-send-as-sticker/main/INSTALL.md
+```
+Fetch and follow instructions from https://raw.githubusercontent.com/lunalunaa/tg-send-as-sticker/main/INSTALL.md
+```
 
 That's the whole setup — one line. The agent will clone, build, prompt you
 for your Telegram API credentials, verify the render, and start the
