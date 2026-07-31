@@ -11,6 +11,32 @@ DejaVu Sans Bold and wraps per-word.
 
 ## Setup
 
+### Option A — just tell your agent this (copy-paste)
+
+> Clone and set up tg-sticker-bypass on this machine: run
+> `bash <(curl -fsSL https://raw.githubusercontent.com/OWNER/tg-bypass/main/setup.sh)`.
+> It clones the repo to ~/workspace/git-repos/tg-bypass, builds it with the
+> Nix flake (or falls back to a pip venv if there's no Nix), creates `.env`
+> from `.env.example`, and runs an offline render smoke test. Ask me for my
+> Telegram api_id/api_hash if the script needs them (I get them free at
+> https://my.telegram.org → API development tools), write them into `.env`,
+> then verify the build by running `tg-sticker say "test 测试" --out /tmp/x.webp`.
+> Finally start it with `tg-sticker listen` so I can do the one-time phone
+> login. Never commit `.env` or `*.session` files.
+
+That's it — paste the quoted paragraph to your agent (Hermes, Claude Code,
+Codex, etc.) and it will do everything below by itself.
+
+### Option B — manual
+
+```sh
+git clone https://github.com/OWNER/tg-bypass.git ~/workspace/git-repos/tg-bypass
+cd ~/workspace/git-repos/tg-bypass
+./setup.sh
+```
+
+Or fully by hand:
+
 ```sh
 nix build            # builds ./result/bin/tg-sticker
 # or: nix develop    # drops you in a shell with python + deps
