@@ -59,11 +59,15 @@ chats where only stickers/GIFs are allowed. Do all of the following yourself.
 
 - Type anything into Telegram's **Saved Messages** → it comes back as a
   sticker in ~1s. Drag/forward it into the locked-down group.
-- `./result/bin/tg-sticker listen --group <group>` additionally
+- `./result/bin/tg-sticker listen --group <chat>` additionally
   auto-forwards every sticker to that group and replaces any plain text the
   user posts there with a sticker version.
-- `./result/bin/tg-sticker say "text" --send <group>` sends a one-off
+- `./result/bin/tg-sticker say "text" --send <chat>` sends a one-off
   sticker straight from the command line.
+- `<chat>` can be: `@username`, a numeric id like `-1001234567890`, a
+  `t.me/...` link, the exact group title as it appears in the user's chat
+  list (they must be a member), or `me` for Saved Messages. The tool prints
+  what it resolved at startup so the user can confirm it's the right group.
 
 Report what actually happened: build result, smoke-test render size, and
 whether login succeeded. If something failed, say so — don't claim success

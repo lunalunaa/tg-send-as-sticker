@@ -58,7 +58,7 @@ tg-sticker listen
   it grants full access to your account.**
 - **Anything you type into your own "Saved Messages" chat is instantly
   re-sent as a sticker** — drag/forward it into the locked-down group.
-- With `--group <username-or-id>`:
+- With `--group <chat>`:
   - Saved Messages stickers are **also auto-forwarded to the group**, and
   - any plain text you accidentally post in the group is **deleted and
     replaced with a sticker version** within a second.
@@ -66,6 +66,21 @@ tg-sticker listen
 ```sh
 tg-sticker listen --group my_sticker_only_group
 ```
+
+#### What you can pass as a chat (`--send` / `--group`)
+
+| form | example | notes |
+| ---- | ------- | ----- |
+| public username | `@my_group` or `my_group` | with or without `@` |
+| numeric id | `-1001234567890` | private groups/channels |
+| t.me link | `t.me/my_group` | link gets normalized |
+| exact group title | `"Sticker Hell 🔥"` | as shown in your chat list; you must be a member; must match exactly (quote if it has spaces) |
+| `me` | `me` | your Saved Messages |
+
+At startup the tool prints what it resolved to — e.g.
+`group target: group 'Sticker Hell 🔥' (@stickerhell) [id -100…]` — so you
+can confirm it picked the right chat. If a title matches multiple chats it
+tells you and asks for the numeric id instead.
 
 ### 2. One-off rendering (no login needed)
 

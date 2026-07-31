@@ -237,6 +237,81 @@ def _client(args):
     return TelegramClient(args.session, api_id, api_hash)
 
 
+CHAT_HELP = """\
+what to pass where a chat/group is expected — any of:
+  @groupname        public group/channel username (with or without @)
+  -1001234567890    numeric id of a private group/channel
+  t.me/groupname    invite or profile link
+  exact title       the group's display title, exactly as it appears in
+                    your chat list, quoted if it has spaces — only works
+                    for groups you're already in, and must match exactly
+  me                your own Saved Messages
+"""
+
+
+async def _resolve_chat(client, spec: str):
+    """Resolve a chat spec to a Telethon entity, with a friendly error."""
+    s = spec.strip()
+    if s.lower() in ("me", "saved"):
+        return "me"
+    # numeric id (groups/channels are negative, usually -100...)
+    if s.lstrip("-").isdigit():
+        try:
+            return await client.get_entity(int(s))
+        except Exception as e:
+            sys.exit(f"chat id {s}: couldn't resolve ({e}). Are you a member?")
+    # t.me/... links -> username
+    for pre in ("https://t.me/", "http://t.me/", "t.me/"):
+        if s.startswith(pre):
+            s = s[len(pre):].split("/")[0].split("?")[0]
+            break
+    if s.startswith("@"):
+        s = s[1:]
+    # username (no spaces) — resolve directly
+    if " " not in s and s:
+        try:
+            return await client.get_entity(s)
+        except ValueError:
+            pass  # fall through to title search
+    # title search across your dialogs (exact, then unique case-insensitive)
+    exact, ci = [], []
+    async for d in client.iter_dialogs():
+        if d.name == s:
+            exact.append(d.entity)
+        elif d.name and d.name.lower() == s.lower():
+            ci.append(d.entity)
+    matches = exact or ci
+    if len(matches) == 1:
+        return matches[0]
+    if len(matches) > 1:
+        names = ", ".join(f"{getattr(e, 'title', e)} (id {e.id})" for e in matches)
+        sys.exit(f"'{spec}' matches multiple chats: {names}. Use the numeric id instead.")
+    sys.exit(
+        f"couldn't find a chat matching '{spec}'.\n\n"
+        "Pass one of:\n"
+        "  @groupname        public username\n"
+        "  -100xxxxxxxxxx    numeric group id\n"
+        "  the exact group title as shown in your chat list (must be a member)\n"
+        "  me                Saved Messages"
+    )
+
+
+def _chat_desc(entity) -> str:
+    """Human-readable description of a resolved entity."""
+    from telethon.tl import types
+
+    if entity == "me":
+        return "Saved Messages"
+    if isinstance(entity, (types.Channel, types.Chat)):
+        kind = "group" if getattr(entity, "megagroup", True) or isinstance(entity, types.Chat) else "channel"
+        title = getattr(entity, "title", "?")
+        uname = getattr(entity, "username", None)
+        return f"{kind} '{title}'" + (f" (@{uname})" if uname else "") + f" [id {entity.id}]"
+    uname = getattr(entity, "username", None)
+    name = " ".join(filter(None, [getattr(entity, "first_name", ""), getattr(entity, "last_name", "")]))
+    return f"user {name}" + (f" (@{uname})" if uname else "") + f" [id {entity.id}]"
+
+
 async def _send_as_sticker(client, chat, text: str, emoji: str):
     with tempfile.NamedTemporaryFile(suffix=".webp", delete=False) as f:
         tmp = f.name
@@ -257,9 +332,10 @@ async def cmd_say(args):
     if args.send:
         client = _client(args)
         async with client:
-            chat = args.send  # username, phone, or "me" for Saved Messages
+            chat = await _resolve_chat(client, args.send)
+            print(f"target: {_chat_desc(chat)}")
             await client.send_file(chat, out, force_document=False)
-            print(f"sent as sticker to {chat}")
+            print("sent as sticker")
 
 
 async def cmd_listen(args):
@@ -271,6 +347,10 @@ async def cmd_listen(args):
     print(f"logged in as {me.first_name} (@{me.username})")
 
     saved = "me"
+    group = None
+    if args.group:
+        group = await _resolve_chat(client, args.group)
+        print(f"group target: {_chat_desc(group)}")
 
     @client.on(events.NewMessage(chats=saved))
     async def on_saved(event):
@@ -284,14 +364,14 @@ async def cmd_listen(args):
             render_sticker(text, tmp)
             await client.send_file(saved, tmp, force_document=False)
             # optionally forward into the target group automatically
-            if args.group:
-                await client.send_file(args.group, tmp, force_document=False)
+            if group is not None:
+                await client.send_file(group, tmp, force_document=False)
         finally:
             os.unlink(tmp)
 
-    if args.group:
+    if group is not None:
 
-        @client.on(events.NewMessage(chats=args.group))
+        @client.on(events.NewMessage(chats=group))
         async def on_group(event):
             """Text you post in the group gets replaced by a sticker."""
             if event.sender_id != me.id:
@@ -304,11 +384,11 @@ async def cmd_listen(args):
             try:
                 render_sticker(text, tmp)
                 await event.message.delete()
-                await client.send_file(args.group, tmp, force_document=False)
+                await client.send_file(group, tmp, force_document=False)
             finally:
                 os.unlink(tmp)
 
-        print(f"relaying your text in '{args.group}' as stickers")
+        print(f"relaying your text in {_chat_desc(group)} as stickers")
 
     print("listening in Saved Messages — send any text to get a sticker back.")
     print("Ctrl-C to stop.")
@@ -328,7 +408,11 @@ def main():
     say = sub.add_parser("say", help="render one sticker (optionally send)")
     say.add_argument("text")
     say.add_argument("--out", help="output .webp path (default: temp file)")
-    say.add_argument("--send", help="also send: username/phone/'me'")
+    say.add_argument(
+        "--send",
+        metavar="CHAT",
+        help="also send to a chat. " + CHAT_HELP.replace("\n", "; "),
+    )
     say.add_argument("--fg", default="white")
     say.add_argument("--outline", default="black")
     say.set_defaults(func=cmd_say)
@@ -336,8 +420,10 @@ def main():
     listen = sub.add_parser("listen", help="auto-convert your text to stickers")
     listen.add_argument(
         "--group",
+        metavar="CHAT",
         help="also auto-forward your Saved-Messages stickers here, and replace "
-        "any plain text you post in this group with a sticker",
+        "any plain text you post in this group with a sticker. "
+        + CHAT_HELP.replace("\n", "; "),
     )
     listen.set_defaults(func=cmd_listen)
 
