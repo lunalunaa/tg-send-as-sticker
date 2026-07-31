@@ -1,0 +1,10 @@
+# secrets & account state — never commit
+.env
+*.session
+*.session-journal
+
+# build artifacts
+result
+result-*
+__pycache__/
+*.pyc
