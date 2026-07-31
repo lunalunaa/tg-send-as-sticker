@@ -14,7 +14,7 @@ DejaVu Sans Bold and wraps per-word.
 ### Option A — just tell your agent this (copy-paste)
 
 > Clone and set up tg-sticker-bypass on this machine: run
-> `bash <(curl -fsSL https://raw.githubusercontent.com/OWNER/tg-bypass/main/setup.sh)`.
+> `bash <(curl -fsSL https://raw.githubusercontent.com/lunalunaa/tg-send-as-sticker/main/setup.sh)`.
 > It clones the repo to ~/workspace/git-repos/tg-bypass, builds it with the
 > Nix flake (or falls back to a pip venv if there's no Nix), creates `.env`
 > from `.env.example`, and runs an offline render smoke test. Ask me for my
@@ -30,7 +30,7 @@ Codex, etc.) and it will do everything below by itself.
 ### Option B — manual
 
 ```sh
-git clone https://github.com/OWNER/tg-bypass.git ~/workspace/git-repos/tg-bypass
+git clone https://github.com/lunalunaa/tg-send-as-sticker.git ~/workspace/git-repos/tg-bypass
 cd ~/workspace/git-repos/tg-bypass
 ./setup.sh
 ```

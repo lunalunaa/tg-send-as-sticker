@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # tg-sticker-bypass one-click setup.
 # Safe for an AI agent (or a human) to run non-interactively-ish:
-#   bash <(curl -fsSL https://raw.githubusercontent.com/OWNER/tg-bypass/main/setup.sh)
+#   bash <(curl -fsSL https://raw.githubusercontent.com/lunalunaa/tg-send-as-sticker/main/setup.sh)
 # or from a clone:  ./setup.sh
 set -euo pipefail
 
-REPO_URL="${TG_REPO_URL:-https://github.com/OWNER/tg-bypass.git}"
+REPO_URL="${TG_REPO_URL:-https://github.com/lunalunaa/tg-send-as-sticker.git}"
 DEST="${TG_DEST:-$HOME/workspace/git-repos/tg-bypass}"
 
 say()  { printf '\033[1;36m==>\033[0m %s\n' "$*"; }
